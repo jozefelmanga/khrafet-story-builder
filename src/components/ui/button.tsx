@@ -9,18 +9,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl",
+        default: "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:shadow-lg hover:shadow-primary/30 transition-all duration-300",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg hover:shadow-destructive/30",
         outline:
-          "border border-border bg-background/50 backdrop-blur-sm hover:bg-accent/50 hover:text-accent-foreground hover:border-primary/50",
+          "border border-border/60 bg-card/50 backdrop-blur-sm hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary-glow/10 hover:border-primary/40 hover:shadow-md hover:shadow-primary/20 transition-all duration-300",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent/50 hover:text-accent-foreground backdrop-blur-sm",
+          "bg-gradient-to-r from-secondary to-secondary-glow text-secondary-foreground hover:shadow-lg hover:shadow-secondary/30 transition-all duration-300",
+        ghost: "hover:bg-gradient-to-r hover:from-accent/10 hover:to-accent-glow/10 hover:text-accent-foreground backdrop-blur-sm transition-all duration-300",
         link: "text-primary underline-offset-4 hover:underline",
-        neon: "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:shadow-lg hover:shadow-primary/50 border border-primary/50",
-        "neon-secondary": "bg-gradient-to-r from-secondary to-secondary-glow text-secondary-foreground hover:shadow-lg hover:shadow-secondary/50 border border-secondary/50",
-        "neon-accent": "bg-gradient-to-r from-accent to-accent-glow text-accent-foreground hover:shadow-lg hover:shadow-accent/50 border border-accent/50",
+        elegant: "bg-gradient-to-br from-card to-muted border border-border/50 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/20 backdrop-blur-sm transition-all duration-300",
+        "elegant-secondary": "bg-gradient-to-br from-card to-muted border border-border/50 hover:border-secondary/40 hover:shadow-lg hover:shadow-secondary/20 backdrop-blur-sm transition-all duration-300",
+        "elegant-accent": "bg-gradient-to-br from-card to-muted border border-border/50 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/20 backdrop-blur-sm transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",
