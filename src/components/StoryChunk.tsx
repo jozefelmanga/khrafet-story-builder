@@ -22,36 +22,24 @@ interface StoryChunkProps {
   onComplete: () => void;
 }
 
-// Mock story data - in real app, this would come from API
-const mockStoryChunks: Record<string, StoryData[]> = {
-  "fantasy-funny-short": [
-    {
-      id: "1",
-      text: "You wake up in a mystical forest with a talking squirrel sitting on your chest. The squirrel introduces himself as Gerald, the self-proclaimed 'Guardian of Nuts and Nonsense.' He explains that you've been chosen to find the legendary Golden Acorn, but first you must prove your worthiness by... solving his riddle about proper nut storage techniques.",
-      choices: [
-        { id: "1a", text: "Accept Gerald's ridiculous challenge with enthusiasm" },
-        { id: "1b", text: "Question Gerald's qualifications as a guardian" }
-      ]
-    },
-    {
-      id: "2",
-      text: "Gerald beams with joy at your response and conjures a tiny wizard hat for himself. 'Excellent choice, brave adventurer!' he squeaks. He points his tiny paw toward two glowing paths through the forest. The left path sparkles with golden light and smells like fresh cookies, while the right path glimmers with silver moonbeams and sounds like distant laughter.",
-      choices: [
-        { id: "2a", text: "Follow the cookie-scented golden path" },
-        { id: "2b", text: "Take the moonbeam path toward the laughter" }
-      ]
-    },
-    {
-      id: "3",
-      text: "Your adventure leads you to a clearing where a magnificent tree holds the Golden Acorn, but it's guarded by a dragon... who's wearing reading glasses and appears to be writing poetry. Gerald whispers that this is Bookworm the Dragon, and he's actually quite friendly if you appreciate literature. The dragon looks up and recites a terrible poem about acorns.",
-      choices: [
-        { id: "3a", text: "Compliment the dragon's poetry enthusiastically" },
-        { id: "3b", text: "Offer to help improve his rhyme scheme" }
-      ]
-    }
-  ]
+// Add Puter type to window for TypeScript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare global {
+  interface Window {
+    puter?: any;
+  }
+}
+
+// Helper to build prompt for AI
+const buildPrompt = (genre: string, tone: string, storySoFar: string, userChoice: string | null) => {
+  let base = `You are an interactive story generator. Write the next part of a ${genre} story in a ${tone} tone.`;
+  if (storySoFar) base += ` The story so far: ${storySoFar}`;
+  if (userChoice) base += ` The user chose: ${userChoice}`;
+  base += `\nRespond ONLY with a valid JSON object in this format (no explanation, no markdown, no extra text):\n\n{\n  "text": "<the next part of the story>",\n  "choices": ["<choice 1>", "<choice 2>", "<choice 3>"]\n}\n\nDo not include any commentary or formatting.`;
+  return base;
 };
 
+// Add missing getLengthLimit function
 const getLengthLimit = (length: string): number => {
   switch (length) {
     case "short": return 3;
@@ -67,25 +55,80 @@ const StoryChunk = ({ genre, tone, length, onComplete }: StoryChunkProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [displayedText, setDisplayedText] = useState<string>("");
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const maxChunks = getLengthLimit(length);
   const progress = ((currentChunk + 1) / maxChunks) * 100;
 
+  // Helper to get story so far
+  const getStorySoFar = () => storyData.map(chunk => chunk.text).join(" ");
+
+  // Fetch next story chunk from AI
+  const fetchNextChunk = async (userChoice: string | null) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Check if Puter.js is loaded
+      if (typeof window !== 'undefined' && !window.puter) {
+        setError("AI service not loaded. Please refresh the page and ensure Puter.js is accessible.");
+        setIsLoading(false);
+        return;
+      }
+      // Check if user is signed in
+      // @ts-ignore
+      if (window.puter && window.puter.auth && !(await window.puter.auth.isSignedIn())) {
+        // @ts-ignore
+        await window.puter.auth.signIn();
+      }
+      const prompt = buildPrompt(genre, tone, getStorySoFar(), userChoice);
+      // @ts-ignore
+      const completion = await window.puter.ai.chat(prompt);
+      const aiResponse = completion.message?.content || completion.message;
+      // Debug log the raw AI response
+      console.log("AI raw response:", aiResponse);
+      // Try to parse JSON from AI response
+      let parsed;
+      if (typeof aiResponse === "string") {
+        try {
+          parsed = JSON.parse(aiResponse);
+        } catch {
+          // fallback: try to extract JSON from text
+          const match = aiResponse.match(/\{[\s\S]*\}/);
+          if (match) parsed = JSON.parse(match[0]);
+        }
+      } else if (typeof aiResponse === "object" && aiResponse !== null) {
+        parsed = aiResponse;
+      }
+      if (!parsed || !parsed.text || !parsed.choices) throw new Error("AI response invalid");
+      const newChunk: StoryData = {
+        id: (storyData.length + 1).toString(),
+        text: parsed.text,
+        choices: parsed.choices.map((c: string, i: number) => ({ id: `${storyData.length + 1}${String.fromCharCode(97 + i)}`, text: c }))
+      };
+      setStoryData(prev => [...prev, newChunk]);
+      setCurrentChunk(storyData.length); // move to new chunk
+    } catch (e: any) {
+      setError("Failed to generate story. Please try again. " + (e?.message || ""));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // On mount, start story
   useEffect(() => {
-    // Load initial story data
-    const storyKey = `${genre}-${tone}-${length}`;
-    const mockData = mockStoryChunks[storyKey] || mockStoryChunks["fantasy-funny-short"];
-    setStoryData(mockData);
+    setStoryData([]);
+    setCurrentChunk(0);
+    fetchNextChunk(null);
+    // eslint-disable-next-line
   }, [genre, tone, length]);
 
+  // Typewriter effect for story text
   useEffect(() => {
-    // Typewriter effect for story text
     if (storyData[currentChunk]) {
       setIsTyping(true);
       setDisplayedText("");
       const text = storyData[currentChunk].text;
       let index = 0;
-      
       const timer = setInterval(() => {
         if (index < text.length) {
           setDisplayedText(text.substring(0, index + 1));
@@ -95,32 +138,39 @@ const StoryChunk = ({ genre, tone, length, onComplete }: StoryChunkProps) => {
           clearInterval(timer);
         }
       }, 30);
-
       return () => clearInterval(timer);
     }
   }, [currentChunk, storyData]);
 
   const handleChoice = async (choiceId: string) => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+    const choiceText = storyData[currentChunk].choices.find(c => c.id === choiceId)?.text || "";
     if (currentChunk + 1 >= maxChunks) {
       onComplete();
-    } else {
-      setCurrentChunk(currentChunk + 1);
+      setIsLoading(false);
+      return;
     }
-    
+    await fetchNextChunk(choiceText);
     setIsLoading(false);
   };
 
-  if (storyData.length === 0) {
+  if (isLoading && storyData.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center space-x-2 text-primary">
           <Loader2 className="w-6 h-6 animate-spin" />
           <span>Loading your story...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <span className="text-red-500">{error}</span>
+          <Button onClick={() => fetchNextChunk(null)}>Retry</Button>
         </div>
       </div>
     );
