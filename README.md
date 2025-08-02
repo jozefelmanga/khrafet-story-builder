@@ -72,25 +72,32 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
-## AI-Powered Story Generation (New!)
+## AI-Powered Story Generation (Updated!)
 
-This project now uses [Puter.js](https://docs.puter.com/) to generate interactive stories with AI. Instead of static, pre-written story chunks, each part of your story is dynamically created by an AI model (GPT-4o, Claude, etc.) based on your genre, tone, and choices.
+This project now uses [OpenRouter API](https://openrouter.ai/) to generate interactive stories with AI. Instead of static, pre-written story chunks, each part of your story is dynamically created by an AI model based on your genre, tone, and choices.
 
 ### How it works
-- When you start a story or make a choice, the app sends a prompt to the AI using `puter.ai.chat`.
+- When you start a story or make a choice, the app sends a prompt to the OpenRouter API.
 - The AI responds with the next part of the story and a set of choices for you to pick from.
 - This process repeats, making every story unique and interactive.
 
-### How to use
-1. **No backend or API keys required!**
-2. When you run the app, you may be prompted to sign in with Puter.com to use AI features (the first time you use AI).
-3. Select your genre, tone, and length, then enjoy your AI-powered adventure!
+### Setup Required
+1. **Get an OpenRouter API key** from [OpenRouter](https://openrouter.ai/)
+2. **Configure environment variables** - See `OPENROUTER_SETUP.md` for detailed instructions
+3. **Create a `.env` file** with your API key and site information
 
-### About Puter.js
-- [Puter.js](https://docs.puter.com/) is a client-side JavaScript library that brings serverless AI, cloud storage, and authentication to your app with a single script tag.
-- All AI and cloud features run in the browser. Users pay for their own AI usage ("User Pays" model).
+### How to use
+1. Follow the setup instructions in `OPENROUTER_SETUP.md`
+2. Select your genre, tone, and length, then enjoy your AI-powered adventure!
+3. The app uses the `deepseek/deepseek-r1-0528:free` model by default
+
+### About OpenRouter
+- [OpenRouter](https://openrouter.ai/) provides access to multiple AI models through a single API
+- You can easily switch between different models by modifying the configuration
+- The API is reliable and well-documented
 
 ### Development Notes
-- The old static/mock story logic has been removed.
-- All story content is now generated on the fly by AI.
-- If the AI response fails, the app will show an error and let you retry.
+- The old Puter.js integration has been replaced with OpenRouter API
+- All story content is now generated on the fly by AI
+- Comprehensive error handling is included for API failures
+- See `OPENROUTER_SETUP.md` for detailed configuration instructions

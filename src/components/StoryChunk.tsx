@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
+import { openRouterAPI } from "@/lib/openrouter";
 
 interface Choice {
   id: string;
@@ -20,14 +21,6 @@ interface StoryChunkProps {
   tone: string;
   length: string;
   onComplete: () => void;
-}
-
-// Add Puter type to window for TypeScript
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare global {
-  interface Window {
-    puter?: any;
-  }
 }
 
 // Helper to build prompt for AI
@@ -68,43 +61,22 @@ const StoryChunk = ({ genre, tone, length, onComplete }: StoryChunkProps) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Check if Puter.js is loaded
-      if (typeof window !== 'undefined' && !window.puter) {
-        setError("AI service not loaded. Please refresh the page and ensure Puter.js is accessible.");
-        setIsLoading(false);
-        return;
-      }
-      // Check if user is signed in
-      // @ts-ignore
-      if (window.puter && window.puter.auth && !(await window.puter.auth.isSignedIn())) {
-        // @ts-ignore
-        await window.puter.auth.signIn();
-      }
-      const prompt = buildPrompt(genre, tone, getStorySoFar(), userChoice);
-      // @ts-ignore
-      const completion = await window.puter.ai.chat(prompt);
-      const aiResponse = completion.message?.content || completion.message;
-      // Debug log the raw AI response
-      console.log("AI raw response:", aiResponse);
-      // Try to parse JSON from AI response
-      let parsed;
-      if (typeof aiResponse === "string") {
-        try {
-          parsed = JSON.parse(aiResponse);
-        } catch {
-          // fallback: try to extract JSON from text
-          const match = aiResponse.match(/\{[\s\S]*\}/);
-          if (match) parsed = JSON.parse(match[0]);
-        }
-      } else if (typeof aiResponse === "object" && aiResponse !== null) {
-        parsed = aiResponse;
-      }
-      if (!parsed || !parsed.text || !parsed.choices) throw new Error("AI response invalid");
+      const response = await openRouterAPI.generateStoryChunk(
+        genre,
+        tone,
+        getStorySoFar(),
+        userChoice
+      );
+      
       const newChunk: StoryData = {
         id: (storyData.length + 1).toString(),
-        text: parsed.text,
-        choices: parsed.choices.map((c: string, i: number) => ({ id: `${storyData.length + 1}${String.fromCharCode(97 + i)}`, text: c }))
+        text: response.text,
+        choices: response.choices.map((c: string, i: number) => ({ 
+          id: `${storyData.length + 1}${String.fromCharCode(97 + i)}`, 
+          text: c 
+        }))
       };
+      
       setStoryData(prev => [...prev, newChunk]);
       setCurrentChunk(storyData.length); // move to new chunk
     } catch (e: any) {
