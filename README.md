@@ -1,76 +1,95 @@
-# Welcome to your Lovable project
+# Khrafet Tales - Interactive Story Generator
 
-## Project info
+An AI-powered interactive storytelling web application that creates unique, dynamic stories based on user choices.
 
-**URL**: https://lovable.dev/projects/fba8b29c-acc7-41b6-81d9-cfb0d9ca13b3
+## Features
 
-## How can I edit this code?
+- **Interactive Storytelling**: Choose your path through dynamically generated stories
+- **AI-Powered Content**: Each story chunk is generated in real-time using OpenRouter API
+- **Multiple Genres**: Fantasy, Sci-Fi, Mystery, Adventure, and more
+- **Customizable Tone**: Choose from various story tones and moods
+- **Responsive Design**: Beautiful UI that works on all devices
+- **Real-time Generation**: Stories adapt to your choices as you play
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/fba8b29c-acc7-41b6-81d9-cfb0d9ca13b3) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
+## Technologies Used
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **React 18** - Modern React with hooks
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Beautiful, accessible UI components
+- **OpenRouter API** - AI story generation
+- **React Router** - Client-side routing
+- **React Query** - Data fetching and caching
 
-## How can I deploy this project?
+## Getting Started
 
-Simply open [Lovable](https://lovable.dev/projects/fba8b29c-acc7-41b6-81d9-cfb0d9ca13b3) and click on Share -> Publish.
+### Prerequisites
 
-## Can I connect a custom domain to my Lovable project?
+- Node.js 18+ and npm/bun
+- OpenRouter API key (see setup instructions below)
 
-Yes, you can!
+### Installation
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd khrafet-tales
+   ```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
+
+3. **Set up environment variables**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_OPENROUTER_API_KEY=your_openrouter_api_key_here
+   ```
+
+4. **Start the development server**
+   ```bash
+   npm run dev
+   # or
+   bun dev
+   ```
+
+5. **Open your browser**
+   Navigate to `http://localhost:5173`
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. **Deploy to Vercel**
+   ```bash
+   npm i -g vercel
+   vercel
+   ```
+
+2. **Add environment variables in Vercel dashboard**
+   - Go to your Vercel project settings
+   - Add `VITE_OPENROUTER_API_KEY` with your API key
+
+3. **Redeploy**
+   ```bash
+   vercel --prod
+   ```
+
+### Other Platforms
+
+The app can be deployed to any static hosting platform:
+- Netlify
+- GitHub Pages
+- Cloudflare Pages
+- AWS S3 + CloudFront
+
+Just make sure to set the `VITE_OPENROUTER_API_KEY` environment variable.
 
 ## AI-Powered Story Generation (Updated!)
 
