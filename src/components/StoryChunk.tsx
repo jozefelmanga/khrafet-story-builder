@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy, Download } from "lucide-react";
 import { openRouterAPI } from "@/lib/openrouter";
+import { toast } from "sonner";
 
 interface Choice {
   id: string;
@@ -51,21 +52,62 @@ const StoryChunk = ({ genre, tone, length, onComplete }: StoryChunkProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const maxChunks = getLengthLimit(length);
-  const progress = ((currentChunk + 1) / maxChunks) * 100;
 
   // Helper to get story so far
   const getStorySoFar = () => storyData.map(chunk => chunk.text).join(" ");
+
+  // Helper to get the complete story text
+  const getCompleteStory = () => {
+    const storyText = storyData.map(chunk => chunk.text).join(" ");
+    const title = `${genre} Story - ${tone} tone`;
+    const timestamp = new Date().toLocaleString();
+    return `${title}\nGenerated on: ${timestamp}\n\n${storyText}\n\n--- The End ---`;
+  };
+
+  // Copy story to clipboard
+  const copyStoryToClipboard = async () => {
+    try {
+      const storyText = getCompleteStory();
+      await navigator.clipboard.writeText(storyText);
+      toast.success("Story copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy story:", error);
+      toast.error("Failed to copy story to clipboard");
+    }
+  };
+
+  // Download story as text file
+  const downloadStoryAsTxt = () => {
+    try {
+      const storyText = getCompleteStory();
+      const blob = new Blob([storyText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `khrafet-story-${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Story downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to download story:", error);
+      toast.error("Failed to download story");
+    }
+  };
 
   // Fetch next story chunk from AI
   const fetchNextChunk = async (userChoice: string | null) => {
     setIsLoading(true);
     setError(null);
     try {
+      const isFinalChapter = storyData.length + 1 >= maxChunks;
       const response = await openRouterAPI.generateStoryChunk(
         genre,
         tone,
         getStorySoFar(),
-        userChoice
+        userChoice,
+        isFinalChapter
       );
       
       const newChunk: StoryData = {
@@ -149,6 +191,7 @@ const StoryChunk = ({ genre, tone, length, onComplete }: StoryChunkProps) => {
   }
 
   const currentStory = storyData[currentChunk];
+  const progress = currentStory?.choices && currentStory.choices.length === 0 ? 100 : ((currentChunk + 1) / maxChunks) * 100;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 pt-24">
@@ -175,27 +218,64 @@ const StoryChunk = ({ genre, tone, length, onComplete }: StoryChunkProps) => {
             </p>
           </div>
 
-          {/* Choices */}
-          {!isTyping && !isLoading && currentStory?.choices && (
+          {/* Choices or Completion */}
+          {!isTyping && !isLoading && currentStory && (
             <div className="space-y-4 animate-slide-up">
-              <h3 className="text-xl font-semibold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                What do you choose?
-              </h3>
-              <div className="grid gap-3">
-                {currentStory.choices.map((choice, index) => (
-                  <Button
-                    key={choice.id}
-                    variant="outline"
-                    className={`h-auto p-4 text-left justify-start transition-glow hover:glow-primary hover:border-primary ${
-                      index === 0 ? "hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary-glow/10" :
-                      "hover:bg-gradient-to-r hover:from-secondary/10 hover:to-secondary-glow/10"
-                    }`}
-                    onClick={() => handleChoice(choice.id)}
-                  >
-                    <span className="text-base">{choice.text}</span>
-                  </Button>
-                ))}
-              </div>
+              {currentStory.choices && currentStory.choices.length > 0 ? (
+                <>
+                  <h3 className="text-xl font-semibold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    What do you choose?
+                  </h3>
+                  <div className="grid gap-3">
+                    {currentStory.choices.map((choice, index) => (
+                      <Button
+                        key={choice.id}
+                        variant="outline"
+                        className={`h-auto p-4 text-left justify-start transition-glow hover:glow-primary hover:border-primary ${
+                          index === 0 ? "hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary-glow/10" :
+                          "hover:bg-gradient-to-r hover:from-secondary/10 hover:to-secondary-glow/10"
+                        }`}
+                        onClick={() => handleChoice(choice.id)}
+                      >
+                        <span className="text-base">{choice.text}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center space-y-4">
+                  <h3 className="text-xl font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    The End
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Your story has reached its conclusion.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button 
+                      onClick={() => copyStoryToClipboard()}
+                      variant="outline"
+                      className="hover:bg-primary/10"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Story
+                    </Button>
+                    <Button 
+                      onClick={() => downloadStoryAsTxt()}
+                      variant="outline"
+                      className="hover:bg-primary/10"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download as TXT
+                    </Button>
+                    <Button 
+                      onClick={onComplete}
+                      className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                    >
+                      Start a New Story
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

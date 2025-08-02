@@ -84,9 +84,10 @@ class OpenRouterAPI {
     genre: string,
     tone: string,
     storySoFar: string,
-    userChoice: string | null
+    userChoice: string | null,
+    isFinalChapter: boolean = false
   ): Promise<StoryChunkResponse> {
-    const prompt = this.buildPrompt(genre, tone, storySoFar, userChoice);
+    const prompt = this.buildPrompt(genre, tone, storySoFar, userChoice, isFinalChapter);
     
     const requestBody: OpenRouterRequest = {
       model: "deepseek/deepseek-r1-0528:free",
@@ -121,7 +122,7 @@ class OpenRouterAPI {
     }
   }
 
-  private buildPrompt(genre: string, tone: string, storySoFar: string, userChoice: string | null): string {
+  private buildPrompt(genre: string, tone: string, storySoFar: string, userChoice: string | null, isFinalChapter: boolean = false): string {
     let base = `You are an interactive story generator. Write the next part of a ${genre} story in a ${tone} tone.`;
     
     if (storySoFar) {
@@ -132,7 +133,12 @@ class OpenRouterAPI {
       base += ` The user chose: ${userChoice}`;
     }
     
-    base += `\n\nRespond ONLY with a valid JSON object in this format (no explanation, no markdown, no extra text):\n\n{\n  "text": "<the next part of the story>",\n  "choices": ["<choice 1>", "<choice 2>", "<choice 3>"]\n}\n\nDo not include any commentary or formatting.`;
+    if (isFinalChapter) {
+      base += `\n\nThis is the FINAL chapter of the story. Provide a satisfying conclusion or open ending. DO NOT provide choices to continue the story.`;
+      base += `\n\nRespond ONLY with a valid JSON object in this format (no explanation, no markdown, no extra text):\n\n{\n  "text": "<the final part of the story with a conclusion or open ending>",\n  "choices": []\n}\n\nDo not include any commentary or formatting.`;
+    } else {
+      base += `\n\nRespond ONLY with a valid JSON object in this format (no explanation, no markdown, no extra text):\n\n{\n  "text": "<the next part of the story>",\n  "choices": ["<choice 1>", "<choice 2>", "<choice 3>"]\n}\n\nDo not include any commentary or formatting.`;
+    }
     
     return base;
   }
